@@ -1,0 +1,31 @@
+{
+  "name": "plum-assignment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon dist/apps.js",
+    "start": "node dist/apps.js"
+  },
+  "keywords": [],
+  "author": "sky-kryst",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.3.2",
+    "express": "^4.18.2",
+    "multer": "1.4.5-lts.1",
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.2",
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.14",
+    "@types/multer": "^1.4.7",
+    "@types/node": "^18.11.9",
+    "nodemon": "^2.0.20",
+    "prisma": "^4.6.1"
+  }
+}
