@@ -21,8 +21,8 @@ fn, defaultError) => {
             return yield fn(req, res, next);
         }
         catch (error) {
-            const code = (error === null || error === void 0 ? void 0 : error.statusCode) || (defaultError === null || defaultError === void 0 ? void 0 : defaultError.code) || 500;
-            const message = error.message || (defaultError === null || defaultError === void 0 ? void 0 : defaultError.message);
+            const code = (defaultError === null || defaultError === void 0 ? void 0 : defaultError.code) || (error === null || error === void 0 ? void 0 : error.statusCode) || 500;
+            const message = (defaultError === null || defaultError === void 0 ? void 0 : defaultError.message) || error.message;
             return res.status(code).json(Object.assign({ status: (_a = defaultError === null || defaultError === void 0 ? void 0 : defaultError.status) !== null && _a !== void 0 ? _a : "error" }, (typeof message === "string"
                 ? { error: message }
                 : { errors: message })));

@@ -12,8 +12,8 @@ export const AsyncHandler = (
     try {
       return await fn(req, res, next);
     } catch (error: any) {
-      const code = error?.statusCode || defaultError?.code || 500;
-      const message = error.message || defaultError?.message;
+      const code = defaultError?.code || error?.statusCode || 500;
+      const message = defaultError?.message || error.message;
 
       return res.status(code).json({
         status: defaultError?.status ?? "error",
