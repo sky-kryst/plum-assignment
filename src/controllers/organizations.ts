@@ -177,7 +177,7 @@ export const createEmployees = AsyncHandler(async (req, res, next) => {
         ...(errors.length ? { errors } : null),
       });
     } catch (error: any) {
-      return res.status(400).json({
+      return res.status(500).json({
         status: "error",
         error: error.message,
       });

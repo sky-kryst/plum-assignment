@@ -137,7 +137,7 @@ exports.createEmployees = (0, asyncHandler_1.AsyncHandler)((req, res, next) => _
             return res.status(201).json(Object.assign({ status: success ? "success" : "fail" }, (errors.length ? { errors } : null)));
         }
         catch (error) {
-            return res.status(400).json({
+            return res.status(500).json({
                 status: "error",
                 error: error.message,
             });
