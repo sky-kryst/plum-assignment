@@ -17,71 +17,52 @@ const csv_parse_1 = __importDefault(require("csv-parse"));
 const fs_1 = __importDefault(require("fs"));
 const zod_1 = require("zod");
 const models_1 = __importDefault(require("../models"));
-const getAll = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
-    try {
-        const { page, size } = req.query;
-        const organizations = yield models_1.default.organization.findMany({
-            skip: Number(page !== null && page !== void 0 ? page : 0),
-            take: Number(size !== null && size !== void 0 ? size : 5),
-            include: {
-                employees: true,
-            },
-        });
-        return res.status(200).json({ status: "success", data: { organizations } });
+const asyncHandler_1 = require("./../utils/asyncHandler");
+const httpError_1 = require("./../utils/httpError");
+exports.getAll = (0, asyncHandler_1.AsyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { page, size } = req.query;
+    const organizations = yield models_1.default.organization.findMany({
+        skip: Number(page !== null && page !== void 0 ? page : 0),
+        take: Number(size !== null && size !== void 0 ? size : 5),
+        include: {
+            employees: true,
+        },
+    });
+    return res.status(200).json({ status: "success", data: { organizations } });
+}), { code: 404, message: "Not Found" });
+exports.createOne = (0, asyncHandler_1.AsyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { body } = req;
+    if (!body || !body.name) {
+        throw new httpError_1.HttpError("Request body should contain a name field.", 400);
     }
-    catch (error) {
-        return res.status((_b = (_a = error === null || error === void 0 ? void 0 : error.cause) === null || _a === void 0 ? void 0 : _a.code) !== null && _b !== void 0 ? _b : 404).json({
-            status: "error",
-            error: (_c = error.message) !== null && _c !== void 0 ? _c : "Not found",
-        });
+    if (!isNaN(body.name)) {
+        throw new httpError_1.HttpError("Organization name should be a string.", 400);
     }
-});
-exports.getAll = getAll;
-const createOne = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e;
-    try {
-        const { body } = req;
-        if (!body || !body.name) {
-            throw new Error("Request body should contain a name field.");
-        }
-        if (!isNaN(body.name)) {
-            throw new Error("Organization name should be a string.");
-        }
-        if (body.name.length > 30) {
-            throw new Error("Organization name cannot be more than 30 characters.");
-        }
-        if (body.name.length < 1) {
-            throw new Error("Organization name should be more that 0 characters.");
-        }
-        const data = yield models_1.default.organization.create({ data: { name: body.name } });
-        return res
-            .status(201)
-            .json({ status: "success", data: { organization: data } });
+    if (body.name.length > 30) {
+        throw new httpError_1.HttpError("Organization name cannot be more than 30 characters.", 400);
     }
-    catch (error) {
-        return res.status((_e = (_d = error === null || error === void 0 ? void 0 : error.cause) === null || _d === void 0 ? void 0 : _d.code) !== null && _e !== void 0 ? _e : 400).json({
-            status: "error",
-            error: error.message,
-        });
+    if (body.name.length < 1) {
+        throw new httpError_1.HttpError("Organization name should be more that 0 characters.", 400);
     }
-});
-exports.createOne = createOne;
-const createEmployees = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f, _g;
-    try {
-        const { file, params } = req;
-        if (!params.orgId) {
-            throw Error("Organization ID must be specified in the URL.");
-        }
-        const orgExists = yield models_1.default.organization.findFirst({
-            where: { id: params.orgId },
-        });
-        if (!orgExists) {
-            throw Error("Organization does not exists.");
-        }
-        const csv = fs_1.default.readFileSync(file.path);
-        csv_parse_1.default.parse(csv, (err, records) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = yield models_1.default.organization.create({ data: { name: body.name } });
+    return res
+        .status(201)
+        .json({ status: "success", data: { organization: data } });
+}));
+exports.createEmployees = (0, asyncHandler_1.AsyncHandler)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { file, params } = req;
+    if (!params.orgId) {
+        throw Error("Organization ID must be specified in the URL.");
+    }
+    const orgExists = yield models_1.default.organization.findFirst({
+        where: { id: params.orgId },
+    });
+    if (!orgExists) {
+        throw new httpError_1.HttpError("Organization does not exists.", 400);
+    }
+    const csv = fs_1.default.readFileSync(file.path);
+    csv_parse_1.default.parse(csv, (err, records) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
             if (err) {
                 throw err;
             }
@@ -153,16 +134,13 @@ const createEmployees = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
                     skipDuplicates: true,
                 });
             }
-            return res
-                .status(201)
-                .json({ status: success ? "success" : "fail", errors });
-        }));
-    }
-    catch (error) {
-        return res.status((_g = (_f = error === null || error === void 0 ? void 0 : error.cause) === null || _f === void 0 ? void 0 : _f.code) !== null && _g !== void 0 ? _g : 400).json({
-            status: "error",
-            error: error.message,
-        });
-    }
-});
-exports.createEmployees = createEmployees;
+            return res.status(201).json(Object.assign({ status: success ? "success" : "fail" }, (errors.length ? { errors } : null)));
+        }
+        catch (error) {
+            return res.status(400).json({
+                status: "error",
+                error: error.message,
+            });
+        }
+    }));
+}));

@@ -1,11 +1,12 @@
 import CSV from "csv-parse";
-import { RequestHandler } from "express";
 import fs from "fs";
 import { z } from "zod";
 import model from "../models";
+import { AsyncHandler } from "./../utils/asyncHandler";
+import { HttpError } from "./../utils/httpError";
 
-export const getAll: RequestHandler = async (req, res, next) => {
-  try {
+export let getAll = AsyncHandler(
+  async (req, res) => {
     const { page, size } = req.query;
 
     const organizations = await model.organization.findMany({
@@ -17,65 +18,60 @@ export const getAll: RequestHandler = async (req, res, next) => {
     });
 
     return res.status(200).json({ status: "success", data: { organizations } });
-  } catch (error: any) {
-    return res.status(error?.cause?.code ?? 404).json({
-      status: "error",
-      error: error.message ?? "Not found",
-    });
+  },
+  { code: 404, message: "Not Found" }
+);
+
+export const createOne = AsyncHandler(async (req, res) => {
+  const { body } = req;
+
+  if (!body || !body.name) {
+    throw new HttpError("Request body should contain a name field.", 400);
   }
-};
 
-export const createOne: RequestHandler = async (req, res, next) => {
-  try {
-    const { body } = req;
-
-    if (!body || !body.name) {
-      throw new Error("Request body should contain a name field.");
-    }
-
-    if (!isNaN(body.name)) {
-      throw new Error("Organization name should be a string.");
-    }
-
-    if (body.name.length > 30) {
-      throw new Error("Organization name cannot be more than 30 characters.");
-    }
-
-    if (body.name.length < 1) {
-      throw new Error("Organization name should be more that 0 characters.");
-    }
-
-    const data = await model.organization.create({ data: { name: body.name } });
-
-    return res
-      .status(201)
-      .json({ status: "success", data: { organization: data } });
-  } catch (error: any) {
-    return res.status(error?.cause?.code ?? 400).json({
-      status: "error",
-      error: error.message,
-    });
+  if (!isNaN(body.name)) {
+    throw new HttpError("Organization name should be a string.", 400);
   }
-};
 
-export const createEmployees: RequestHandler = async (req, res, next) => {
-  try {
-    const { file, params } = req;
-    if (!params.orgId) {
-      throw Error("Organization ID must be specified in the URL.");
-    }
+  if (body.name.length > 30) {
+    throw new HttpError(
+      "Organization name cannot be more than 30 characters.",
+      400
+    );
+  }
 
-    const orgExists = await model.organization.findFirst({
-      where: { id: params.orgId },
-    });
+  if (body.name.length < 1) {
+    throw new HttpError(
+      "Organization name should be more that 0 characters.",
+      400
+    );
+  }
 
-    if (!orgExists) {
-      throw Error("Organization does not exists.");
-    }
+  const data = await model.organization.create({ data: { name: body.name } });
 
-    const csv = fs.readFileSync(file!.path);
+  return res
+    .status(201)
+    .json({ status: "success", data: { organization: data } });
+});
 
-    CSV.parse(csv, async (err, records) => {
+export const createEmployees = AsyncHandler(async (req, res, next) => {
+  const { file, params } = req;
+  if (!params.orgId) {
+    throw Error("Organization ID must be specified in the URL.");
+  }
+
+  const orgExists = await model.organization.findFirst({
+    where: { id: params.orgId },
+  });
+
+  if (!orgExists) {
+    throw new HttpError("Organization does not exists.", 400);
+  }
+
+  const csv = fs.readFileSync(file!.path);
+
+  CSV.parse(csv, async (err, records) => {
+    try {
       if (err) {
         throw err;
       }
@@ -176,14 +172,15 @@ export const createEmployees: RequestHandler = async (req, res, next) => {
         });
       }
 
-      return res
-        .status(201)
-        .json({ status: success ? "success" : "fail", errors });
-    });
-  } catch (error: any) {
-    return res.status(error?.cause?.code ?? 400).json({
-      status: "error",
-      error: error.message,
-    });
-  }
-};
+      return res.status(201).json({
+        status: success ? "success" : "fail",
+        ...(errors.length ? { errors } : null),
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        status: "error",
+        error: error.message,
+      });
+    }
+  });
+});
