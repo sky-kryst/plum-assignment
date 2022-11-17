@@ -19,40 +19,43 @@ export let getAll = AsyncHandler(
 
     return res.status(200).json({ status: "success", data: { organizations } });
   },
-  { code: 404, message: "Not Found" }
+  { code: 500, message: "Something went wrong." }
 );
 
-export const createOne = AsyncHandler(async (req, res) => {
-  const { body } = req;
+export const createOne = AsyncHandler(
+  async (req, res) => {
+    const { body } = req;
 
-  if (!body || !body.name) {
-    throw new HttpError("Request body should contain a name field.", 400);
-  }
+    if (!body || !body.name) {
+      throw new HttpError("Request body should contain a name field.", 400);
+    }
 
-  if (!isNaN(body.name)) {
-    throw new HttpError("Organization name should be a string.", 400);
-  }
+    if (!isNaN(body.name)) {
+      throw new HttpError("Organization name should be a string.", 400);
+    }
 
-  if (body.name.length > 30) {
-    throw new HttpError(
-      "Organization name cannot be more than 30 characters.",
-      400
-    );
-  }
+    if (body.name.length > 30) {
+      throw new HttpError(
+        "Organization name cannot be more than 30 characters.",
+        400
+      );
+    }
 
-  if (body.name.length < 1) {
-    throw new HttpError(
-      "Organization name should be more that 0 characters.",
-      400
-    );
-  }
+    if (body.name.length < 1) {
+      throw new HttpError(
+        "Organization name should be more that 0 characters.",
+        400
+      );
+    }
 
-  const data = await model.organization.create({ data: { name: body.name } });
+    const data = await model.organization.create({ data: { name: body.name } });
 
-  return res
-    .status(201)
-    .json({ status: "success", data: { organization: data } });
-});
+    return res
+      .status(201)
+      .json({ status: "success", data: { organization: data } });
+  },
+  { code: 400, message: "Organization with this name already exists" }
+);
 
 export const createEmployees = AsyncHandler(async (req, res, next) => {
   const { file, params } = req;

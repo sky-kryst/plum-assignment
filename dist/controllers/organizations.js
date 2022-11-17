@@ -29,7 +29,7 @@ exports.getAll = (0, asyncHandler_1.AsyncHandler)((req, res) => __awaiter(void 0
         },
     });
     return res.status(200).json({ status: "success", data: { organizations } });
-}), { code: 404, message: "Not Found" });
+}), { code: 500, message: "Something went wrong." });
 exports.createOne = (0, asyncHandler_1.AsyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { body } = req;
     if (!body || !body.name) {
@@ -48,7 +48,7 @@ exports.createOne = (0, asyncHandler_1.AsyncHandler)((req, res) => __awaiter(voi
     return res
         .status(201)
         .json({ status: "success", data: { organization: data } });
-}));
+}), { code: 400, message: "Organization with this name already exists" });
 exports.createEmployees = (0, asyncHandler_1.AsyncHandler)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { file, params } = req;
     if (!params.orgId) {
